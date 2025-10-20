@@ -2,6 +2,8 @@
 
 Application de gestion de fiches techniques avec système de tags, rubriques et gestion de médias.
 
+![Screenshot](screenshot.png)
+
 ## Fonctionnalités
 
 - **Fiches techniques** : Création, édition et consultation de fiches avec contenu Markdown
