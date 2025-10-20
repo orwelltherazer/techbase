@@ -1,0 +1,228 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{% if rubrique.id %}Modifier la rubrique{% else %}Nouvelle rubrique{% endif %} – Techbase{% endblock %}
+
+{% block body %}
+<div class="page-header">
+  <h1 class="text-h1">
+    <i class="fas fa-folder"></i>
+    {% if rubrique.id %}Modifier la rubrique{% else %}Nouvelle rubrique{% endif %}
+  </h1>
+</div>
+
+{% if error %}
+  <div class="alert alert-danger">
+    <i class="fas fa-exclamation-triangle"></i> {{ error }}
+  </div>
+{% endif %}
+
+<form method="POST" action="rubriques.php?action={% if rubrique.id %}edit&id={{ rubrique.id }}{% else %}new{% endif %}" class="rubrique-form">
+  
+  <div class="form-card">
+    <div class="form-group">
+      <label for="nom">Nom de la rubrique *</label>
+      <input 
+        type="text" 
+        id="nom" 
+        name="nom" 
+        required 
+        value="{{ rubrique.nom|default('') }}"
+        placeholder="Ex: Serveurs, Réseaux, Applications..."
+        oninput="updateSlugPreview()">
+      <small class="form-help">Le nom qui sera affiché dans l'interface</small>
+    </div>
+
+    <div class="form-group">
+      <label for="slug">Slug (URL) *</label>
+      <input 
+        type="text" 
+        id="slug" 
+        name="slug" 
+        value="{{ rubrique.slug|default('') }}"
+        placeholder="Ex: serveurs"
+        pattern="[a-z0-9-]+"
+        oninput="validateSlug()">
+      <small class="form-help">
+        Identifiant unique pour l'URL (lettres minuscules, chiffres et tirets uniquement)
+        <span id="slugPreview" style="display: none; margin-top: 0.5rem; display: block; color: var(--info);">
+          URL: <code></code>
+        </span>
+      </small>
+    </div>
+
+    <div class="form-group">
+      <label for="ordre">Ordre d'affichage *</label>
+      <input 
+        type="number" 
+        id="ordre" 
+        name="ordre" 
+        required 
+        min="1"
+        value="{{ rubrique.ordre|default(suggested_ordre|default(1)) }}">
+      <small class="form-help">Position dans le menu (1 = premier)</small>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i>
+        {% if rubrique.id %}Mettre à jour{% else %}Créer la rubrique{% endif %}
+      </button>
+      <a href="rubriques.php?action=list" class="btn btn-secondary">
+        <i class="fas fa-times"></i>
+        Annuler
+      </a>
+    </div>
+  </div>
+</form>
+
+<style>
+.rubrique-form {
+  max-width: 600px;
+}
+
+.form-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 1rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-help {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.alert {
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.alert-danger {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+#slugPreview code {
+  background: var(--bg-secondary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+}
+
+input.error {
+  border-color: var(--danger);
+}
+</style>
+
+<script>
+function generateSlug(text) {
+  // Remplacer les caractères accentués
+  const accents = {
+    'à': 'a', 'â': 'a', 'ä': 'a', 'á': 'a',
+    'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
+    'í': 'i', 'ì': 'i', 'î': 'i', 'ï': 'i',
+    'ó': 'o', 'ò': 'o', 'ô': 'o', 'ö': 'o',
+    'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u',
+    'ç': 'c', 'ñ': 'n'
+  };
+  
+  text = text.toLowerCase();
+  for (let accent in accents) {
+    text = text.replace(new RegExp(accent, 'g'), accents[accent]);
+  }
+  
+  text = text.replace(/[^a-z0-9-]/g, '-');
+  text = text.replace(/-+/g, '-');
+  return text.replace(/^-|-$/g, '');
+}
+
+function updateSlugPreview() {
+  const nomInput = document.getElementById('nom');
+  const slugInput = document.getElementById('slug');
+  
+  // Ne mettre à jour le slug que si l'utilisateur ne l'a pas modifié manuellement
+  if (!slugInput.dataset.manuallyEdited || slugInput.value === '') {
+    const slug = generateSlug(nomInput.value);
+    slugInput.value = slug;
+    
+    if (slug) {
+      const preview = document.getElementById('slugPreview');
+      preview.style.display = 'block';
+      preview.querySelector('code').textContent = window.location.origin + '/?rubrique=' + slug;
+    }
+  }
+}
+
+function validateSlug() {
+  const slugInput = document.getElementById('slug');
+  slugInput.dataset.manuallyEdited = 'true';
+  
+  // Valider le format du slug
+  const slug = slugInput.value;
+  const validSlug = slug.match(/^[a-z0-9-]*$/);
+  
+  if (!validSlug && slug !== '') {
+    slugInput.classList.add('error');
+  } else {
+    slugInput.classList.remove('error');
+    
+    if (slug) {
+      const preview = document.getElementById('slugPreview');
+      preview.style.display = 'block';
+      preview.querySelector('code').textContent = window.location.origin + '/?rubrique=' + slug;
+    }
+  }
+}
+
+// Initialiser l'aperçu si le slug existe déjà
+document.addEventListener('DOMContentLoaded', () => {
+  const slugInput = document.getElementById('slug');
+  if (slugInput.value) {
+    slugInput.dataset.manuallyEdited = 'true';
+    validateSlug();
+  }
+});
+</script>
+{% endblock %}

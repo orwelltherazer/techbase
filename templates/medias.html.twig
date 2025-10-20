@@ -1,0 +1,257 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Médias — Techbase{% endblock %}
+
+{% block body %}
+<div class="mb-6">
+  <h1 class="text-3xl font-bold text-gray-900 mb-2">Médias</h1>
+  <p class="text-gray-600">Gérez votre bibliothèque de médias</p>
+</div>
+
+<!-- Zone d'upload -->
+<div class="bg-white border border-gray-200 rounded-xl p-6 mb-6 shadow-sm">
+  <form method="POST" enctype="multipart/form-data" id="uploadForm">
+    <input type="hidden" name="action" value="upload_media">
+    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition hover:border-primary hover:bg-teal-50 bg-gray-50" id="dropzone">
+      <i class="fas fa-cloud-upload-alt text-5xl text-primary mb-4 block"></i>
+      <h3 class="text-xl font-semibold mb-2 text-gray-900">Glissez vos fichiers ici</h3>
+      <p class="text-gray-600 mb-4">ou cliquez pour sélectionner</p>
+      <input type="file" name="media[]" id="fileInput" accept="image/jpeg,image/png,application/pdf" multiple hidden>
+      <small class="text-gray-500 text-sm">Formats acceptés : JPEG, PNG, PDF • Taille max : 10 Mo par fichier</small>
+    </div>
+    <button type="submit" class="hidden mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition font-semibold" id="uploadBtn">
+      <i class="fas fa-upload"></i>
+      Téléverser les fichiers
+    </button>
+  </form>
+</div>
+
+<!-- Filtres et recherche -->
+<div class="flex gap-4 mb-6 items-center flex-wrap">
+  <div class="flex-1 relative">
+    <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+    <input type="text" id="searchMedia" class="w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Rechercher un média...">
+  </div>
+  <div class="flex gap-2">
+    <button class="px-4 py-2.5 border border-gray-300 bg-white rounded-lg cursor-pointer text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:border-gray-400 flex items-center gap-2 active" data-type="all">
+      <i class="fas fa-th text-sm"></i> Tout
+    </button>
+    <button class="px-4 py-2.5 border border-gray-300 bg-white rounded-lg cursor-pointer text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:border-gray-400 flex items-center gap-2 filter-btn" data-type="image">
+      <i class="fas fa-image text-sm"></i> Images
+    </button>
+    <button class="px-4 py-2.5 border border-gray-300 bg-white rounded-lg cursor-pointer text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:border-gray-400 flex items-center gap-2 filter-btn" data-type="pdf">
+      <i class="far fa-file text-sm"></i> PDF
+    </button>
+  </div>
+</div>
+
+<!-- Grille de médias -->
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4" id="mediaGrid">
+  {% if medias|length > 0 %}
+    {% for media in medias %}
+    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden transition shadow-sm hover:-translate-y-0.5 hover:shadow-md hover:border-primary media-card" data-type="{{ media.type }}" data-name="{{ media.nom|lower }}">
+      <div class="w-full h-48 bg-gray-50 flex items-center justify-center overflow-hidden relative">
+        {% if media.type == 'image' %}
+          <img src="{{ media.url }}" alt="{{ media.nom }}" class="w-full h-full object-cover">
+        {% else %}
+          <div class="flex flex-col items-center gap-2 text-red-500">
+            <img src="/techbase/images/file-pdf-regular-full.svg" alt="PDF" class="w-20 h-20">
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="p-3.5">
+        <div class="font-semibold text-sm text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis mb-1.5" title="{{ media.nom }}">{{ media.nom }}</div>
+        <div class="flex justify-between text-xs text-gray-600">
+          <span>{{ media.taille }}</span>
+          <span>{{ media.date }}</span>
+        </div>
+      </div>
+
+      <div class="flex border-t border-gray-200 bg-gray-50">
+        <button class="flex-1 p-2.5 border-none bg-transparent text-gray-600 cursor-pointer transition text-sm hover:bg-primary hover:text-white" onclick="copyMarkdown('{{ media.nom }}', '{{ media.url }}')" title="Copier le lien Markdown">
+          <i class="fas fa-code"></i>
+        </button>
+        <button class="flex-1 p-2.5 border-none bg-transparent text-gray-600 cursor-pointer transition text-sm border-l border-r border-gray-200 hover:bg-primary hover:text-white" onclick="downloadMedia('{{ media.url }}', '{{ media.nom }}')" title="Télécharger">
+          <i class="fas fa-download"></i>
+        </button>
+        <button class="flex-1 p-2.5 border-none bg-transparent text-gray-600 cursor-pointer transition text-sm hover:bg-red-500 hover:text-white" onclick="deleteMedia({{ media.id }}, '{{ media.nom }}')" title="Supprimer">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="col-span-full">
+      <div class="text-center py-12">
+        <i class="fas fa-images text-6xl text-gray-300 mb-4"></i>
+        <div class="text-xl font-semibold text-gray-900 mb-2">Aucun média</div>
+        <div class="text-gray-600">Commencez par téléverser vos premiers fichiers</div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Modal de confirmation -->
+<div class="hidden fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50" id="deleteModal">
+  <div class="bg-white rounded-lg max-w-md w-full mx-4 shadow-xl">
+    <div class="flex justify-between items-center p-4 border-b border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-900">Confirmer la suppression</h3>
+      <button onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+    </div>
+    <div class="p-4">
+      <p class="text-gray-700">Êtes-vous sûr de vouloir supprimer <strong id="deleteMediaName"></strong> ?</p>
+      <p class="text-gray-600 text-sm mt-2">Cette action est irréversible.</p>
+    </div>
+    <div class="flex justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+      <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium" onclick="closeDeleteModal()">Annuler</button>
+      <button class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium" id="confirmDeleteBtn">
+        <i class="fas fa-trash"></i> Supprimer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast de notification -->
+<div class="fixed bottom-8 right-8 bg-primary text-white px-6 py-4 rounded-lg flex items-center gap-3 shadow-lg opacity-0 translate-y-4 transition-all pointer-events-none z-50 font-semibold text-sm" id="toast">
+  <i class="fas fa-check-circle text-lg"></i>
+  <span id="toastMessage">Lien Markdown copié !</span>
+</div>
+
+<script>
+// Upload zone
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const uploadBtn = document.getElementById('uploadBtn');
+
+dropzone.addEventListener('click', () => fileInput.click());
+
+dropzone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropzone.classList.add('border-primary', 'bg-teal-50', 'scale-[1.01]');
+});
+
+dropzone.addEventListener('dragleave', () => {
+  dropzone.classList.remove('border-primary', 'bg-teal-50', 'scale-[1.01]');
+});
+
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('border-primary', 'bg-teal-50', 'scale-[1.01]');
+  fileInput.files = e.dataTransfer.files;
+  updateUploadBtn();
+});
+
+fileInput.addEventListener('change', updateUploadBtn);
+
+function updateUploadBtn() {
+  if (fileInput.files.length > 0) {
+    uploadBtn.classList.remove('hidden');
+    uploadBtn.innerHTML = `<i class="fas fa-upload"></i> Téléverser ${fileInput.files.length} fichier(s)`;
+  } else {
+    uploadBtn.classList.add('hidden');
+  }
+}
+
+// Filtres
+const filterBtns = document.querySelectorAll('[data-type]');
+const mediaCards = document.querySelectorAll('.media-card');
+const searchInput = document.getElementById('searchMedia');
+
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    filterBtns.forEach(b => {
+      b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary');
+      b.classList.add('bg-white', 'text-gray-700');
+    });
+    btn.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
+    btn.classList.remove('bg-white', 'text-gray-700');
+    filterMedia();
+  });
+});
+
+searchInput.addEventListener('input', filterMedia);
+
+function filterMedia() {
+  const activeType = document.querySelector('[data-type].active').dataset.type;
+  const searchTerm = searchInput.value.toLowerCase();
+
+  mediaCards.forEach(card => {
+    const cardType = card.dataset.type;
+    const cardName = card.dataset.name;
+    const matchesType = activeType === 'all' || cardType === activeType;
+    const matchesSearch = cardName.includes(searchTerm);
+
+    if (matchesType && matchesSearch) {
+      card.classList.remove('hidden');
+    } else {
+      card.classList.add('hidden');
+    }
+  });
+}
+
+// Copier le lien Markdown
+function copyMarkdown(name, url) {
+  const isImage = url.match(/\.(jpg|jpeg|png)$/i);
+  const markdown = isImage ? `![${name}](${url})` : `[${name}](${url}){:target="_blank"}`;
+
+  navigator.clipboard.writeText(markdown).then(() => {
+    showToast('Lien Markdown copié !');
+  });
+}
+
+// Télécharger
+function downloadMedia(url, name) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  showToast('Téléchargement démarré');
+}
+
+// Supprimer
+let deleteMediaId = null;
+
+function deleteMedia(id, name) {
+  deleteMediaId = id;
+  document.getElementById('deleteMediaName').textContent = name;
+  const modal = document.getElementById('deleteModal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function closeDeleteModal() {
+  const modal = document.getElementById('deleteModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  deleteMediaId = null;
+}
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+  if (deleteMediaId) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.innerHTML = `
+      <input type="hidden" name="action" value="delete_media">
+      <input type="hidden" name="id" value="${deleteMediaId}">
+    `;
+    document.body.appendChild(form);
+    form.submit();
+  }
+});
+
+// Toast
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  const toastMessage = document.getElementById('toastMessage');
+  toastMessage.textContent = message;
+  toast.classList.remove('opacity-0', 'translate-y-4');
+  toast.classList.add('opacity-100', 'translate-y-0');
+
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'translate-y-4');
+    toast.classList.remove('opacity-100', 'translate-y-0');
+  }, 3000);
+}
+</script>
+{% endblock %}

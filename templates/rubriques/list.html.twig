@@ -1,0 +1,182 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des rubriques – Techbase{% endblock %}
+
+{% block body %}
+<div class="flex justify-between items-center mb-6">
+  <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+    <i class="fas fa-folder"></i>
+    Gestion des rubriques
+  </h1>
+  <a href="rubriques.php?action=new" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition font-semibold inline-flex items-center gap-2">
+    <i class="fas fa-plus"></i>
+    Ajouter une rubrique
+  </a>
+</div>
+
+<!-- Messages de succès/erreur -->
+{% if app.request.get('success') %}
+  <div class="flex items-center gap-3 px-6 py-4 rounded-lg mb-6 bg-green-50 border border-green-200 text-green-800">
+    <i class="fas fa-check-circle"></i>
+    {% if app.request.get('success') == 'created' %}
+      Rubrique créée avec succès.
+    {% elseif app.request.get('success') == 'updated' %}
+      Rubrique modifiée avec succès.
+    {% elseif app.request.get('success') == 'deleted' %}
+      Rubrique supprimée avec succès.
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if app.request.get('error') %}
+  <div class="flex items-center gap-3 px-6 py-4 rounded-lg mb-6 bg-red-50 border border-red-200 text-red-800">
+    <i class="fas fa-exclamation-triangle"></i>
+    {% if app.request.get('error') == 'notfound' %}
+      Rubrique non trouvée.
+    {% elseif app.request.get('error') == 'hasfiches' %}
+      Impossible de supprimer cette rubrique : elle contient {{ app.request.get('count') }} fiche(s).
+      Veuillez d'abord déplacer ou supprimer les fiches associées.
+    {% endif %}
+  </div>
+{% endif %}
+
+<div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+
+  <div>
+    {% if rubriques|length > 0 %}
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="bg-gray-50 border-b-2 border-gray-200">
+              <th class="px-4 py-4 text-left font-semibold text-gray-900">Ordre</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-900">Nom</th>
+              <th class="px-4 py-4 text-left font-semibold text-gray-900">Slug</th>
+              <th class="px-4 py-4 text-center font-semibold text-gray-900">Fiches</th>
+              <th class="px-4 py-4 text-right font-semibold text-gray-900">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rubrique in rubriques %}
+            <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
+              <td class="px-4 py-4 w-20 text-center">
+                <span class="inline-block px-3 py-1 bg-gray-100 rounded text-sm font-semibold">{{ rubrique.ordre }}</span>
+              </td>
+              <td class="px-4 py-4">
+                <strong class="text-gray-900">{{ rubrique.nom }}</strong>
+              </td>
+              <td class="px-4 py-4">
+                <code class="px-2 py-1 bg-gray-100 rounded text-sm text-blue-600 font-mono">{{ rubrique.slug }}</code>
+              </td>
+              <td class="px-4 py-4 w-24 text-center">
+                {% if rubrique.nb_fiches > 0 %}
+                  <a href="./?rubrique={{ rubrique.slug }}" class="text-primary font-semibold hover:underline inline-flex items-center gap-1">
+                    <i class="fas fa-file-alt"></i>
+                    {{ rubrique.nb_fiches }}
+                  </a>
+                {% else %}
+                  <span class="text-gray-400">0</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-4 w-40 text-right">
+                <div class="flex justify-end gap-2">
+                  <a href="./?rubrique={{ rubrique.slug }}" class="inline-flex items-center justify-center w-9 h-9 bg-gray-100 text-gray-700 rounded hover:bg-primary hover:text-white transition" title="Voir les fiches">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  <a href="rubriques.php?action=edit&id={{ rubrique.id }}" class="inline-flex items-center justify-center w-9 h-9 bg-gray-100 text-gray-700 rounded hover:bg-primary hover:text-white transition" title="Modifier">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <button
+                    onclick="confirmDelete({{ rubrique.id }}, '{{ rubrique.nom }}', {{ rubrique.nb_fiches }})"
+                    class="inline-flex items-center justify-center w-9 h-9 bg-gray-100 rounded transition disabled:opacity-30 disabled:cursor-not-allowed {% if rubrique.nb_fiches == 0 %}text-red-600 hover:bg-red-500 hover:text-white{% else %}text-gray-400{% endif %}"
+                    title="Supprimer"
+                    {% if rubrique.nb_fiches > 0 %}disabled{% endif %}>
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="p-12">
+        <div class="text-center">
+          <i class="fas fa-folder-open text-6xl text-gray-300 mb-4"></i>
+          <div class="text-xl font-semibold text-gray-900 mb-2">Aucune rubrique</div>
+          <div class="text-gray-600 mb-6">Créez votre première rubrique pour organiser vos fiches</div>
+          <a href="rubriques.php?action=new" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition font-semibold inline-flex items-center gap-2">
+            <i class="fas fa-plus"></i>
+            Créer une rubrique
+          </a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50" onclick="if(event.target===this) closeDeleteModal()">
+  <div class="bg-white rounded-lg max-w-md w-full mx-4 shadow-xl">
+    <div class="flex justify-between items-center p-4 border-b border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-900">Confirmer la suppression</h3>
+      <button type="button" onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+    </div>
+
+    <div class="p-4">
+      <p class="text-gray-700">Êtes-vous sûr de vouloir supprimer la rubrique <strong id="rubriqueNom"></strong> ?</p>
+      <p class="text-gray-600 text-sm mt-4">Cette action est irréversible.</p>
+    </div>
+
+    <div class="flex justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+      <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium" onclick="closeDeleteModal()">Annuler</button>
+      <a href="#" id="confirmDeleteBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-semibold inline-flex items-center gap-2">
+        <i class="fas fa-trash"></i>
+        Supprimer
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+function confirmDelete(id, nom, nbFiches) {
+  if (nbFiches > 0) {
+    alert('Cette rubrique contient des fiches et ne peut pas être supprimée.');
+    return;
+  }
+
+  document.getElementById('rubriqueNom').textContent = nom;
+  document.getElementById('confirmDeleteBtn').href = 'rubriques.php?action=delete&id=' + id;
+  const modal = document.getElementById('deleteModal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+  const modal = document.getElementById('deleteModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('deleteModal');
+    if (modal.classList.contains('flex')) {
+      closeDeleteModal();
+    }
+  }
+});
+
+// Fermer les alertes après 5 secondes
+setTimeout(() => {
+  const alerts = document.querySelectorAll('.bg-green-50, .bg-red-50');
+  alerts.forEach(alert => {
+    alert.style.transition = 'opacity 0.3s';
+    alert.style.opacity = '0';
+    setTimeout(() => alert.remove(), 300);
+  });
+}, 5000);
+</script>
+{% endblock %}

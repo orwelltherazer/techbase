@@ -1,0 +1,125 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard – Techbase{% endblock %}
+
+{% block body %}
+<!-- Header -->
+<div class="flex justify-between items-center mb-6">
+  <h1 class="text-2xl font-bold text-gray-900">Tableau de bord</h1>
+  <a href="./?action=new" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition font-medium">
+    <i class="fas fa-plus"></i>
+    Ajouter une fiche
+  </a>
+</div>
+
+<!-- Barre de recherche -->
+<form method="GET" action="./" class="relative mb-6">
+  <input type="hidden" name="action" value="recherche">
+  <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+  <input type="text" name="q" value="{{ search|default('') }}" placeholder="Rechercher..." class="w-full pl-12 pr-24 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" autofocus>
+  <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition font-medium">
+    Rechercher
+  </button>
+</form>
+
+<!-- Statistiques -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+        <i class="fas fa-file-alt text-xl"></i>
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-gray-500 uppercase">Fiches</div>
+        <div class="text-2xl font-bold text-gray-900">{{ stats.total }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600">
+        <i class="fas fa-clock text-xl"></i>
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-gray-500 uppercase">À faire</div>
+        <div class="text-2xl font-bold text-amber-600">{{ stats.a_faire }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+        <i class="fas fa-spinner text-xl"></i>
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-gray-500 uppercase">En cours</div>
+        <div class="text-2xl font-bold text-blue-600">{{ stats.en_cours }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-green-600">
+        <i class="fas fa-check text-xl"></i>
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-gray-500 uppercase">Terminées</div>
+        <div class="text-2xl font-bold text-green-600">{{ stats.termine|default(0) }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Liste des fiches -->
+<div class="mb-4">
+  <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+    <i class="fas fa-clock text-gray-400"></i>
+    Dernières fiches
+  </h2>
+</div>
+
+<div class="space-y-3">
+  {% if recent_fiches|length > 0 %}
+    {% for fiche in recent_fiches %}
+    <div class="bg-white p-4 rounded-lg border border-gray-200 hover:border-primary hover:shadow-md transition">
+      <a href="./?action=view&id={{ fiche.id }}" class="text-lg font-semibold text-gray-900 hover:text-primary block mb-2">
+        {{ fiche.titre }}
+      </a>
+      <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div class="flex items-center gap-2 text-sm text-gray-600">
+          {% if fiche.rubrique_nom %}
+            <i class="fas fa-folder"></i>
+            {{ fiche.rubrique_nom }}
+          {% else %}
+            <i class="fas fa-folder-open"></i>
+            Sans rubrique
+          {% endif %}
+        </div>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold {% if fiche.etat == 'À faire' %}bg-amber-100 text-amber-800{% elseif fiche.etat == 'En cours' %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
+          {% if fiche.etat == 'À faire' %}
+            <i class="fas fa-clock"></i>
+          {% elseif fiche.etat == 'En cours' %}
+            <i class="fas fa-spinner"></i>
+          {% else %}
+            <i class="fas fa-check"></i>
+          {% endif %}
+          {{ fiche.etat }}
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="bg-white p-12 rounded-lg border border-gray-200 text-center">
+      <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+      <div class="text-xl font-semibold text-gray-700 mb-2">Aucune fiche</div>
+      <a href="./?action=new" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition font-medium mt-4">
+        <i class="fas fa-plus"></i>
+        Créer
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

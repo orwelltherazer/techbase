@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Techbase{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/techbase/css/styles.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0d9488',
+            'primary-dark': '#0f766e',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+  <aside class="w-64 bg-gray-800 text-white flex flex-col">
+    <a href="./" class="block p-4 border-b border-gray-700 hover:bg-gray-700 transition">
+      <div class="flex items-center gap-3">
+        <img src="/techbase/images/icone.svg" alt="" class="w-6 h-6">
+        <h1 class="text-xl font-semibold">TechBase</h1>
+      </div>
+      <p class="text-sm text-gray-400 mt-1">Base de connaissance IT</p>
+    </a>
+
+    <nav class="flex-1 overflow-y-auto p-2">
+      <div class="text-xs uppercase tracking-wider text-gray-400 px-3 py-2 font-semibold">Rubriques</div>
+      {% if rubriques is defined and rubriques|length > 0 %}
+        {% for rub in rubriques %}
+          <a href="./?rubrique={{ rub.slug }}" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-700 transition {% if active_rubrique|default('') == rub.slug %}bg-gray-700{% endif %}">
+            <i class="fas fa-folder w-4 text-center"></i>
+            <span>{{ rub.nom }}</span>
+          </a>
+        {% endfor %}
+      {% else %}
+        <div class="flex items-center gap-3 px-3 py-2 opacity-50">
+          <i class="fas fa-info-circle w-4 text-center"></i>
+          <span>Aucune rubrique</span>
+        </div>
+      {% endif %}
+
+      <div class="h-px bg-gray-700 my-2"></div>
+
+      <a href="./?page=medias" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-700 transition">
+        <i class="fas fa-images w-4 text-center"></i>
+        <span>Médias</span>
+      </a>
+      <a href="rubriques.php?action=list" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-700 transition">
+        <i class="fas fa-cog w-4 text-center"></i>
+        <span>Configuration</span>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
+    <div class="max-w-7xl mx-auto">
+      {% block body %}{% endblock %}
+    </div>
+  </main>
+</body>
+</html>

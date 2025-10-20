@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ rubrique.nom }} – Techbase{% endblock %}
+
+{% block body %}
+<!-- Header -->
+<div class="flex justify-between items-center mb-6">
+  <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+    <i class="fas fa-folder-open text-primary"></i>
+    {{ rubrique.nom }}
+  </h1>
+  <a href="./?action=new&rubrique_id={{ rubrique.id }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition font-medium">
+    <i class="fas fa-plus"></i>
+    Ajouter une fiche
+  </a>
+</div>
+
+<!-- Liste des fiches -->
+<div class="space-y-3">
+  {% if fiches|length > 0 %}
+    {% for fiche in fiches %}
+    <div class="bg-white p-4 rounded-lg border border-gray-200 hover:border-primary hover:shadow-md transition">
+      <a href="./?action=view&id={{ fiche.id }}" class="text-lg font-semibold text-gray-900 hover:text-primary block mb-3">
+        {{ fiche.titre }}
+      </a>
+
+      <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          {% if fiche.tags|length > 0 %}
+          <div class="flex flex-wrap gap-2">
+            {% for tag in fiche.tags %}
+              <span class="inline-flex items-center px-2.5 py-1 bg-teal-50 text-primary rounded-full text-xs font-semibold border border-teal-200">
+                {{ tag }}
+              </span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold {% if fiche.etat == 'À faire' %}bg-amber-100 text-amber-800{% elseif fiche.etat == 'En cours' %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
+          {% if fiche.etat == 'À faire' %}
+            <i class="fas fa-clock"></i>
+          {% elseif fiche.etat == 'En cours' %}
+            <i class="fas fa-spinner"></i>
+          {% else %}
+            <i class="fas fa-check"></i>
+          {% endif %}
+          {{ fiche.etat }}
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="bg-white p-12 rounded-lg border border-gray-200 text-center">
+      <i class="fas fa-folder-open text-6xl text-gray-300 mb-4"></i>
+      <div class="text-xl font-semibold text-gray-700 mb-2">Aucune fiche</div>
+      <div class="text-gray-500 mb-6">Créez votre première fiche pour cette rubrique</div>
+      <a href="./?action=new&rubrique_id={{ rubrique.id }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition font-medium">
+        <i class="fas fa-plus"></i>
+        Créer
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
