@@ -3,158 +3,81 @@
 {% block title %}{% if rubrique.id %}Modifier la rubrique{% else %}Nouvelle rubrique{% endif %} – Techbase{% endblock %}
 
 {% block body %}
-<div class="page-header">
-  <h1 class="text-h1">
+<div class="page-header-sticky">
+  <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
     <i class="fas fa-folder"></i>
     {% if rubrique.id %}Modifier la rubrique{% else %}Nouvelle rubrique{% endif %}
   </h1>
 </div>
 
 {% if error %}
-  <div class="alert alert-danger">
-    <i class="fas fa-exclamation-triangle"></i> {{ error }}
+  <div class="flex items-center gap-3 px-6 py-4 rounded-lg mb-6 bg-red-50 border border-red-200 text-red-800">
+    <i class="fas fa-exclamation-triangle"></i>
+    {{ error }}
   </div>
 {% endif %}
 
-<form method="POST" action="rubriques.php?action={% if rubrique.id %}edit&id={{ rubrique.id }}{% else %}new{% endif %}" class="rubrique-form">
-  
-  <div class="form-card">
-    <div class="form-group">
-      <label for="nom">Nom de la rubrique *</label>
-      <input 
-        type="text" 
-        id="nom" 
-        name="nom" 
-        required 
+<form method="POST" action="rubriques.php?action={% if rubrique.id %}edit&id={{ rubrique.id }}{% else %}new{% endif %}" class="max-w-2xl">
+
+  <div class="bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
+    <div class="mb-6">
+      <label for="nom" class="block mb-2 font-semibold text-gray-900">Nom de la rubrique *</label>
+      <input
+        type="text"
+        id="nom"
+        name="nom"
+        required
         value="{{ rubrique.nom|default('') }}"
         placeholder="Ex: Serveurs, Réseaux, Applications..."
-        oninput="updateSlugPreview()">
-      <small class="form-help">Le nom qui sera affiché dans l'interface</small>
+        oninput="updateSlugPreview()"
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg text-base bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+      <small class="block mt-2 text-sm text-gray-600">Le nom qui sera affiché dans l'interface</small>
     </div>
 
-    <div class="form-group">
-      <label for="slug">Slug (URL) *</label>
-      <input 
-        type="text" 
-        id="slug" 
-        name="slug" 
+    <div class="mb-6">
+      <label for="slug" class="block mb-2 font-semibold text-gray-900">Slug (URL) *</label>
+      <input
+        type="text"
+        id="slug"
+        name="slug"
         value="{{ rubrique.slug|default('') }}"
         placeholder="Ex: serveurs"
         pattern="[a-z0-9-]+"
-        oninput="validateSlug()">
-      <small class="form-help">
+        oninput="validateSlug()"
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg text-base bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+      <small class="block mt-2 text-sm text-gray-600">
         Identifiant unique pour l'URL (lettres minuscules, chiffres et tirets uniquement)
-        <span id="slugPreview" style="display: none; margin-top: 0.5rem; display: block; color: var(--info);">
-          URL: <code></code>
+        <span id="slugPreview" class="hidden mt-2 block text-blue-600">
+          URL: <code class="bg-gray-100 px-2 py-1 rounded font-mono text-sm"></code>
         </span>
       </small>
     </div>
 
-    <div class="form-group">
-      <label for="ordre">Ordre d'affichage *</label>
-      <input 
-        type="number" 
-        id="ordre" 
-        name="ordre" 
-        required 
+    <div class="mb-6">
+      <label for="ordre" class="block mb-2 font-semibold text-gray-900">Ordre d'affichage *</label>
+      <input
+        type="number"
+        id="ordre"
+        name="ordre"
+        required
         min="1"
-        value="{{ rubrique.ordre|default(suggested_ordre|default(1)) }}">
-      <small class="form-help">Position dans le menu (1 = premier)</small>
+        value="{{ rubrique.ordre|default(suggested_ordre|default(1)) }}"
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg text-base bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+      <small class="block mt-2 text-sm text-gray-600">Position dans le menu (1 = premier)</small>
     </div>
 
-    <div class="form-actions">
-      <button type="submit" class="btn btn-primary">
+    <div class="flex gap-3 mt-8 pt-6 border-t border-gray-200">
+      <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition font-semibold">
         <i class="fas fa-save"></i>
         {% if rubrique.id %}Mettre à jour{% else %}Créer la rubrique{% endif %}
       </button>
-      <a href="rubriques.php?action=list" class="btn btn-secondary">
+      <a href="rubriques.php?action=list" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
         <i class="fas fa-times"></i>
         Annuler
       </a>
     </div>
   </div>
 </form>
-
-<style>
-.rubrique-form {
-  max-width: 600px;
-}
-
-.form-card {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 2rem;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.form-group input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 1rem;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-help {
-  display: block;
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.alert {
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.alert-danger {
-  background: #f8d7da;
-  border: 1px solid #f5c6cb;
-  color: #721c24;
-}
-
-#slugPreview code {
-  background: var(--bg-secondary);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-family: 'Courier New', monospace;
-}
-
-input.error {
-  border-color: var(--danger);
-}
-</style>
 
 <script>
 function generateSlug(text) {
@@ -167,12 +90,12 @@ function generateSlug(text) {
     'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u',
     'ç': 'c', 'ñ': 'n'
   };
-  
+
   text = text.toLowerCase();
   for (let accent in accents) {
     text = text.replace(new RegExp(accent, 'g'), accents[accent]);
   }
-  
+
   text = text.replace(/[^a-z0-9-]/g, '-');
   text = text.replace(/-+/g, '-');
   return text.replace(/^-|-$/g, '');
@@ -181,15 +104,15 @@ function generateSlug(text) {
 function updateSlugPreview() {
   const nomInput = document.getElementById('nom');
   const slugInput = document.getElementById('slug');
-  
+
   // Ne mettre à jour le slug que si l'utilisateur ne l'a pas modifié manuellement
   if (!slugInput.dataset.manuallyEdited || slugInput.value === '') {
     const slug = generateSlug(nomInput.value);
     slugInput.value = slug;
-    
+
     if (slug) {
       const preview = document.getElementById('slugPreview');
-      preview.style.display = 'block';
+      preview.classList.remove('hidden');
       preview.querySelector('code').textContent = window.location.origin + '/?rubrique=' + slug;
     }
   }
@@ -198,19 +121,21 @@ function updateSlugPreview() {
 function validateSlug() {
   const slugInput = document.getElementById('slug');
   slugInput.dataset.manuallyEdited = 'true';
-  
+
   // Valider le format du slug
   const slug = slugInput.value;
   const validSlug = slug.match(/^[a-z0-9-]*$/);
-  
+
   if (!validSlug && slug !== '') {
-    slugInput.classList.add('error');
+    slugInput.classList.add('border-red-500');
+    slugInput.classList.remove('border-gray-300');
   } else {
-    slugInput.classList.remove('error');
-    
+    slugInput.classList.remove('border-red-500');
+    slugInput.classList.add('border-gray-300');
+
     if (slug) {
       const preview = document.getElementById('slugPreview');
-      preview.style.display = 'block';
+      preview.classList.remove('hidden');
       preview.querySelector('code').textContent = window.location.origin + '/?rubrique=' + slug;
     }
   }

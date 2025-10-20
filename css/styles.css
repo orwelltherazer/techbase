@@ -10,6 +10,43 @@
   --info: #1e40af;
 }
 
+/* Header de page sticky */
+.page-header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f9fafb;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Créer un espace opaque au-dessus du header pour masquer le contenu qui scroll */
+.page-header-sticky::before {
+  content: '';
+  position: absolute;
+  top: -2rem;
+  left: -2rem;
+  right: -2rem;
+  height: 2rem;
+  background: #f9fafb;
+  z-index: -1;
+}
+
+@media (min-width: 768px) {
+  .page-header-sticky::before {
+    top: -3rem;
+    height: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-header-sticky::before {
+    top: -4rem;
+    height: 4rem;
+  }
+}
+
 /* Style pour le contenu Markdown/HTML des fiches */
 .content-text {
   line-height: 1.7;
