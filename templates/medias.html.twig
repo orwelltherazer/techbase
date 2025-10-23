@@ -5,91 +5,155 @@
 {% block body %}
 <div class="page-header-sticky">
   <h1 class="text-3xl font-bold text-gray-900 mb-2">Médias</h1>
-  <p class="text-gray-600">Gérez votre bibliothèque de médias</p>
 </div>
 
-<!-- Zone d'upload -->
-<div class="bg-white border border-gray-200 rounded-xl p-6 mb-6 shadow-sm">
-  <form method="POST" enctype="multipart/form-data" id="uploadForm">
-    <input type="hidden" name="action" value="upload_media">
-    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition hover:border-primary hover:bg-teal-50 bg-gray-50" id="dropzone">
-      <i class="fas fa-cloud-upload-alt text-5xl text-primary mb-4 block"></i>
-      <h3 class="text-xl font-semibold mb-2 text-gray-900">Glissez vos fichiers ici</h3>
-      <p class="text-gray-600 mb-4">ou cliquez pour sélectionner</p>
-      <input type="file" name="media[]" id="fileInput" accept="image/jpeg,image/png,application/pdf" multiple hidden>
-      <small class="text-gray-500 text-sm">Formats acceptés : JPEG, PNG, PDF • Taille max : 10 Mo par fichier</small>
-    </div>
-    <button type="submit" class="hidden mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition font-semibold" id="uploadBtn">
-      <i class="fas fa-upload"></i>
-      Téléverser les fichiers
-    </button>
-  </form>
+<!-- Notifications -->
+{% if success %}
+<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6 flex items-center gap-3 transition-all duration-300" id="successNotification">
+  <i class="fas fa-check-circle text-lg"></i>
+  <span>{{ success }}</span>
+  <button onclick="closeNotification('successNotification')" class="ml-auto text-green-600 hover:text-green-800">
+    <i class="fas fa-times"></i>
+  </button>
 </div>
+{% endif %}
 
-<!-- Filtres et recherche -->
-<div class="flex gap-4 mb-6 items-center flex-wrap">
-  <div class="flex-1 relative">
-    <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-    <input type="text" id="searchMedia" class="w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Rechercher un média...">
-  </div>
-  <div class="flex gap-2">
-    <button class="px-4 py-2.5 border border-gray-300 bg-white rounded-lg cursor-pointer text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:border-gray-400 flex items-center gap-2 active" data-type="all">
-      <i class="fas fa-th text-sm"></i> Tout
-    </button>
-    <button class="px-4 py-2.5 border border-gray-300 bg-white rounded-lg cursor-pointer text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:border-gray-400 flex items-center gap-2 filter-btn" data-type="image">
-      <i class="fas fa-image text-sm"></i> Images
-    </button>
-    <button class="px-4 py-2.5 border border-gray-300 bg-white rounded-lg cursor-pointer text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:border-gray-400 flex items-center gap-2 filter-btn" data-type="pdf">
-      <i class="far fa-file text-sm"></i> PDF
-    </button>
-  </div>
+{% if errors %}
+<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-center gap-3 transition-all duration-300" id="errorNotification">
+  <i class="fas fa-exclamation-circle text-lg"></i>
+  <span>{{ errors }}</span>
+  <button onclick="closeNotification('errorNotification')" class="ml-auto text-red-600 hover:text-red-800">
+    <i class="fas fa-times"></i>
+  </button>
 </div>
+{% endif %}
 
-<!-- Grille de médias -->
-<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4" id="mediaGrid">
-  {% if medias|length > 0 %}
-    {% for media in medias %}
-    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden transition shadow-sm hover:-translate-y-0.5 hover:shadow-md hover:border-primary media-card" data-type="{{ media.type }}" data-name="{{ media.nom|lower }}">
-      <div class="w-full h-48 bg-gray-50 flex items-center justify-center overflow-hidden relative">
-        {% if media.type == 'image' %}
-          <img src="{{ media.url }}" alt="{{ media.nom }}" class="w-full h-full object-cover">
-        {% else %}
-          <div class="flex flex-col items-center gap-2 text-red-500">
-            <img src="/techbase/images/file-pdf-regular-full.svg" alt="PDF" class="w-20 h-20">
-          </div>
-        {% endif %}
+<div class="flex gap-6">
+  <!-- Zone principale - Liste des médias (3/4) -->
+  <div class="flex-1" style="flex: 0 0 75%;">
+    <!-- Filtres et recherche -->
+    <div class="flex gap-4 mb-6 items-center flex-wrap">
+      <div class="flex-1 relative">
+        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+        <input type="text" id="searchMedia" class="w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Rechercher un média...">
       </div>
+      <div class="flex gap-2">
+        <button class="px-4 py-2.5 border border-gray-300 bg-white rounded-lg cursor-pointer text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:border-gray-400 flex items-center gap-2 active" data-type="all">
+          <i class="fas fa-th text-sm"></i> Tout
+        </button>
+        <button class="px-4 py-2.5 border border-gray-300 bg-white rounded-lg cursor-pointer text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:border-gray-400 flex items-center gap-2 filter-btn" data-type="image">
+          <i class="fas fa-image text-sm"></i> Images
+        </button>
+        <button class="px-4 py-2.5 border border-gray-300 bg-white rounded-lg cursor-pointer text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:border-gray-400 flex items-center gap-2 filter-btn" data-type="pdf">
+          <i class="far fa-file text-sm"></i> PDF
+        </button>
+      </div>
+    </div>
 
-      <div class="p-3.5">
-        <div class="font-semibold text-sm text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis mb-1.5" title="{{ media.nom }}">{{ media.nom }}</div>
-        <div class="flex justify-between text-xs text-gray-600">
-          <span>{{ media.taille }}</span>
-          <span>{{ media.date }}</span>
+    <!-- Liste des médias -->
+    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      {% if medias|length > 0 %}
+        <div class="divide-y divide-gray-200" id="mediaList">
+          {% for media in medias %}
+          <div class="flex items-center gap-4 p-4 hover:bg-gray-50 transition media-item" data-type="{{ media.type }}" data-name="{{ media.nom|lower }}">
+            <!-- Miniature -->
+            <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {% if media.type == 'image' %}
+                <img src="{{ media.url }}" alt="{{ media.nom }}" class="w-full h-full object-cover">
+              {% else %}
+                <i class="fas fa-file-pdf text-2xl text-red-500"></i>
+              {% endif %}
+            </div>
+
+            <!-- Informations -->
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-gray-900 truncate mb-1" title="{{ media.nom }}">{{ media.nom }}</div>
+              <div class="flex items-center gap-4 text-sm text-gray-600">
+                <span class="flex items-center gap-1">
+                  <i class="fas fa-calendar text-xs"></i>
+                  {{ media.date_format }}
+                </span>
+                <span class="flex items-center gap-1">
+                  <i class="fas fa-weight text-xs"></i>
+                  {{ media.taille_format }}
+                </span>
+                <span class="flex items-center gap-1">
+                  {% if media.type == 'image' %}
+                    <i class="fas fa-image text-xs text-blue-500"></i>
+                    <span class="text-blue-500">Image</span>
+                  {% else %}
+                    <i class="fas fa-file-pdf text-xs text-red-500"></i>
+                    <span class="text-red-500">PDF</span>
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-2 flex-shrink-0">
+              <button class="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition text-sm font-medium" onclick="copyMarkdown('{{ media.nom }}', '{{ media.url }}')" title="Copier le lien Markdown">
+                <i class="fas fa-code"></i>
+              </button>
+              <button class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm font-medium" onclick="deleteMedia({{ media.id }}, '{{ media.nom }}')" title="Supprimer">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-12">
+          <i class="fas fa-images text-6xl text-gray-300 mb-4"></i>
+          <div class="text-xl font-semibold text-gray-900 mb-2">Aucun média</div>
+          <div class="text-gray-600">Commencez par téléverser vos premiers fichiers</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Sidebar - Zone d'upload (1/4) -->
+  <div class="w-1/4" style="flex: 0 0 25%;">
+    <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm sticky top-6">
+      <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <i class="fas fa-cloud-upload-alt text-primary"></i>
+        Upload
+      </h2>
+      
+      <form method="POST" enctype="multipart/form-data" id="uploadForm">
+        <input type="hidden" name="action" value="upload_media">
+        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer transition hover:border-primary hover:bg-teal-50 bg-gray-50" id="dropzone">
+          <i class="fas fa-cloud-upload-alt text-4xl text-primary mb-3 block"></i>
+          <h3 class="text-base font-semibold mb-2 text-gray-900">Glissez vos fichiers</h3>
+          <p class="text-sm text-gray-600 mb-3">ou cliquez pour sélectionner</p>
+          <input type="file" name="media[]" id="fileInput" accept="image/jpeg,image/png,application/pdf" multiple hidden>
+          <small class="text-gray-500 text-xs block">JPEG, PNG, PDF<br>Max : 10 Mo/fichier</small>
+        </div>
+        <button type="submit" class="hidden mt-4 w-full px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition font-semibold" id="uploadBtn">
+          <i class="fas fa-upload"></i>
+          Téléverser
+        </button>
+      </form>
+
+      <!-- Statistiques -->
+      <div class="mt-6 pt-6 border-t border-gray-200">
+        <h3 class="text-sm font-semibold text-gray-900 mb-3">Statistiques</h3>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between text-gray-600">
+            <span>Total médias</span>
+            <span class="font-semibold text-gray-900">{{ medias|length }}</span>
+          </div>
+          <div class="flex justify-between text-gray-600">
+            <span>Images</span>
+            <span class="font-semibold text-gray-900">{{ medias|filter(m => m.type == 'image')|length }}</span>
+          </div>
+          <div class="flex justify-between text-gray-600">
+            <span>PDF</span>
+            <span class="font-semibold text-gray-900">{{ medias|filter(m => m.type == 'pdf')|length }}</span>
+          </div>
         </div>
       </div>
-
-      <div class="flex border-t border-gray-200 bg-gray-50">
-        <button class="flex-1 p-2.5 border-none bg-transparent text-gray-600 cursor-pointer transition text-sm hover:bg-primary hover:text-white" onclick="copyMarkdown('{{ media.nom }}', '{{ media.url }}')" title="Copier le lien Markdown">
-          <i class="fas fa-code"></i>
-        </button>
-        <button class="flex-1 p-2.5 border-none bg-transparent text-gray-600 cursor-pointer transition text-sm border-l border-r border-gray-200 hover:bg-primary hover:text-white" onclick="downloadMedia('{{ media.url }}', '{{ media.nom }}')" title="Télécharger">
-          <i class="fas fa-download"></i>
-        </button>
-        <button class="flex-1 p-2.5 border-none bg-transparent text-gray-600 cursor-pointer transition text-sm hover:bg-red-500 hover:text-white" onclick="deleteMedia({{ media.id }}, '{{ media.nom }}')" title="Supprimer">
-          <i class="fas fa-trash"></i>
-        </button>
-      </div>
     </div>
-    {% endfor %}
-  {% else %}
-    <div class="col-span-full">
-      <div class="text-center py-12">
-        <i class="fas fa-images text-6xl text-gray-300 mb-4"></i>
-        <div class="text-xl font-semibold text-gray-900 mb-2">Aucun média</div>
-        <div class="text-gray-600">Commencez par téléverser vos premiers fichiers</div>
-      </div>
-    </div>
-  {% endif %}
+  </div>
 </div>
 
 <!-- Modal de confirmation -->
@@ -119,6 +183,29 @@
 </div>
 
 <script>
+// Auto-fermeture des notifications après 5 secondes
+document.addEventListener('DOMContentLoaded', () => {
+  const successNotif = document.getElementById('successNotification');
+  const errorNotif = document.getElementById('errorNotification');
+  
+  if (successNotif) {
+    setTimeout(() => closeNotification('successNotification'), 5000);
+  }
+  
+  if (errorNotif) {
+    setTimeout(() => closeNotification('errorNotification'), 5000);
+  }
+});
+
+function closeNotification(id) {
+  const notif = document.getElementById(id);
+  if (notif) {
+    notif.style.opacity = '0';
+    notif.style.transform = 'translateY(-10px)';
+    setTimeout(() => notif.remove(), 300);
+  }
+}
+
 // Upload zone
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
@@ -155,7 +242,7 @@ function updateUploadBtn() {
 
 // Filtres
 const filterBtns = document.querySelectorAll('[data-type]');
-const mediaCards = document.querySelectorAll('.media-card');
+const mediaItems = document.querySelectorAll('.media-item');
 const searchInput = document.getElementById('searchMedia');
 
 filterBtns.forEach(btn => {
@@ -176,43 +263,42 @@ function filterMedia() {
   const activeType = document.querySelector('[data-type].active').dataset.type;
   const searchTerm = searchInput.value.toLowerCase();
 
-  mediaCards.forEach(card => {
-    const cardType = card.dataset.type;
-    const cardName = card.dataset.name;
-    const matchesType = activeType === 'all' || cardType === activeType;
-    const matchesSearch = cardName.includes(searchTerm);
+  mediaItems.forEach(item => {
+    const itemType = item.dataset.type;
+    const itemName = item.dataset.name;
+    const matchesType = activeType === 'all' || itemType === activeType;
+    const matchesSearch = itemName.includes(searchTerm);
 
     if (matchesType && matchesSearch) {
-      card.classList.remove('hidden');
+      item.classList.remove('hidden');
     } else {
-      card.classList.add('hidden');
+      item.classList.add('hidden');
     }
   });
 }
 
 // Copier le lien Markdown
 function copyMarkdown(name, url) {
+  event.preventDefault();
+  event.stopPropagation();
+  
   const isImage = url.match(/\.(jpg|jpeg|png)$/i);
   const markdown = isImage ? `![${name}](${url})` : `[${name}](${url}){:target="_blank"}`;
 
   navigator.clipboard.writeText(markdown).then(() => {
     showToast('Lien Markdown copié !');
+  }).catch(err => {
+    console.error('Erreur lors de la copie:', err);
   });
-}
-
-// Télécharger
-function downloadMedia(url, name) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name;
-  a.click();
-  showToast('Téléchargement démarré');
 }
 
 // Supprimer
 let deleteMediaId = null;
 
 function deleteMedia(id, name) {
+  event.preventDefault();
+  event.stopPropagation();
+  
   deleteMediaId = id;
   document.getElementById('deleteMediaName').textContent = name;
   const modal = document.getElementById('deleteModal');

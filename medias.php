@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         if (!empty($errors)) {
             $message .= "&errors=" . urlencode(implode(", ", $errors));
         }
-        header("Location: ./?page=parametres&$message");
+        header("Location: ./?page=medias&$message");
         exit;
     }
 }
@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $stmt = $pdo->prepare("DELETE FROM medias WHERE id = ?");
         $stmt->execute([$id]);
         
-        header("Location: ./?page=parametres&success=Média supprimé");
+        header("Location: ./?page=medias&success=Média supprimé");
         exit;
     }
 }
